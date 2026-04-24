@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Family Cloud Storage</title>
 
   <style>
@@ -60,7 +59,11 @@
       margin-bottom: 18px;
     }
 
-    .login-box input {
+    .login-box input,
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
       width: 100%;
       padding: 14px;
       border-radius: 16px;
@@ -130,7 +133,8 @@
       line-height: 1.5;
     }
 
-    .upload-box {
+    .upload-box,
+    .album-box {
       margin-top: 20px;
       background: linear-gradient(135deg, #fff7fb, #eef2ff);
       border: 2px dashed #f9a8d4;
@@ -154,20 +158,6 @@
       border-radius: 20px;
       border: 2px solid #fbcfe8;
       background: rgba(255, 255, 255, 0.75);
-    }
-
-    .paste-code-box input,
-    .paste-code-box textarea {
-      width: 100%;
-      padding: 14px;
-      border-radius: 16px;
-      border: 2px solid #fbcfe8;
-      background: #ffffff;
-      color: #831843;
-      margin-bottom: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      outline: none;
     }
 
     .paste-code-box textarea {
@@ -196,10 +186,18 @@
       font-size: 14px;
     }
 
-    .button-row {
+    .button-row,
+    .album-toolbar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+    }
+
+    .album-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     button {
@@ -223,6 +221,7 @@
       background: #cbd5e1;
       box-shadow: none;
       cursor: not-allowed;
+      transform: none;
     }
 
     .danger {
@@ -269,7 +268,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
       margin: 22px 0 18px;
     }
@@ -336,7 +335,8 @@
       gap: 14px;
     }
 
-    .file-card {
+    .file-card,
+    .album-card {
       background: rgba(255, 255, 255, 0.9);
       border: 2px solid #fbcfe8;
       border-radius: 22px;
@@ -345,7 +345,12 @@
       overflow: hidden;
     }
 
-    .file-name {
+    .album-card {
+      border-color: #ddd6fe;
+    }
+
+    .file-name,
+    .album-title {
       font-weight: 900;
       font-size: 14px;
       color: #831843;
@@ -416,7 +421,8 @@
       margin: 0;
     }
 
-    .empty, .error {
+    .empty,
+    .error {
       text-align: center;
       padding: 22px;
       border-radius: 20px;
@@ -451,8 +457,13 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .button-row {
+      .button-row,
+      .album-toolbar {
         flex-direction: column;
+      }
+
+      .album-controls {
+        grid-template-columns: 1fr;
       }
 
       button {
@@ -468,10 +479,8 @@
       <div class="logo">☁️</div>
       <h2>Family Cloud Storage</h2>
       <p>Enter the password to continue.</p>
-
       <input type="password" id="passwordInput" placeholder="Password" />
       <button id="loginBtn">Log In</button>
-
       <div class="login-error" id="loginError"></div>
     </div>
   </div>
@@ -491,12 +500,7 @@
 
     <div class="upload-box">
       <label class="file-label" for="galleryInput">🖼️ Choose Images / Videos from Gallery</label>
-      <input
-        type="file"
-        id="galleryInput"
-        multiple
-        accept="image/*,video/*"
-      />
+      <input type="file" id="galleryInput" multiple accept="image/*,video/*" />
 
       <label class="file-label" for="fileInput">📁 Choose Files / Codes from Internal Storage</label>
       <input
@@ -511,16 +515,8 @@
         <p class="paste-help">
           Paste your code here, type your file name like index.html, style.css, script.js, app.py, or notes.txt, then tap Save Code.
         </p>
-        <input
-          type="text"
-          id="codeFileName"
-          placeholder="Example: index.html"
-        />
-        <textarea
-          id="codePasteArea"
-          placeholder="Paste your code here..."
-          spellcheck="false"
-        ></textarea>
+        <input type="text" id="codeFileName" placeholder="Example: index.html" />
+        <textarea id="codePasteArea" placeholder="Paste your code here..." spellcheck="false"></textarea>
         <div class="button-row">
           <button id="saveCodeBtn" type="button">💾 Save Code</button>
           <button id="clearCodeBtn" type="button" class="soft">🧹 Clear Code Box</button>
@@ -546,6 +542,7 @@
       <div class="tab" data-tab="videos">🎬 Videos</div>
       <div class="tab" data-tab="files">📄 Files</div>
       <div class="tab" data-tab="codes">💻 Codes</div>
+      <div class="tab" data-tab="albums">📚 Albums</div>
     </div>
 
     <div id="images" class="section active">
@@ -580,6 +577,38 @@
       <div class="grid" id="codesList"></div>
     </div>
 
+    <div id="albums" class="section">
+      <div class="section-title">
+        <h2>📚 Albums</h2>
+        <span class="badge" id="albumsCount">0 albums</span>
+      </div>
+
+      <div class="album-box">
+        <label class="file-label" for="albumNameInput">🌷 Create / Choose Album</label>
+        <div class="album-controls">
+          <input type="text" id="albumNameInput" placeholder="Example: Family Trip 2026" />
+          <button id="createAlbumBtn" type="button">➕ Create Album</button>
+        </div>
+
+        <label class="file-label" for="albumSelect">📚 Select Album</label>
+        <select id="albumSelect">
+          <option value="">Loading albums...</option>
+        </select>
+
+        <label class="file-label" for="albumUploadInput">🖼️ Upload Photos / Videos to Album</label>
+        <input type="file" id="albumUploadInput" multiple accept="image/*,video/*" />
+
+        <div class="album-toolbar">
+          <button id="albumUploadBtn" type="button">🌸 Upload to Album</button>
+          <button id="albumRefreshBtn" type="button" class="soft">🔄 Refresh Albums</button>
+        </div>
+
+        <div class="status" id="albumStatusText"></div>
+      </div>
+
+      <div class="grid" id="albumFilesList"></div>
+    </div>
+
     <p class="footer-note">
       Reminder: public rules are for testing only. Secure it later with real authentication 🔐
     </p>
@@ -587,7 +616,6 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-
     import {
       getStorage,
       ref,
@@ -611,30 +639,16 @@
     const app = initializeApp(firebaseConfig);
     const storage = getStorage(app);
 
+    const mainFolder = "uploads";
+    const albumsMainFolder = "uploads/albums";
+    const maxVideoMB = 100;
+    const parallelLimit = 2;
+
     const loginScreen = document.getElementById("loginScreen");
     const passwordInput = document.getElementById("passwordInput");
     const loginBtn = document.getElementById("loginBtn");
     const loginError = document.getElementById("loginError");
-
     const correctPassword = "FreedomLuke";
-
-    loginBtn.addEventListener("click", checkPassword);
-    passwordInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        checkPassword();
-      }
-    });
-
-    function checkPassword() {
-      if (passwordInput.value === correctPassword) {
-        loginScreen.style.display = "none";
-        passwordInput.value = "";
-        loginError.textContent = "";
-      } else {
-        loginError.textContent = "Incorrect password. Please try again.";
-        passwordInput.value = "";
-      }
-    }
 
     const galleryInput = document.getElementById("galleryInput");
     const fileInput = document.getElementById("fileInput");
@@ -647,6 +661,16 @@
     const progressArea = document.getElementById("progressArea");
     const progressBar = document.getElementById("progressBar");
     const statusText = document.getElementById("statusText");
+
+    const albumNameInput = document.getElementById("albumNameInput");
+    const albumSelect = document.getElementById("albumSelect");
+    const albumUploadInput = document.getElementById("albumUploadInput");
+    const createAlbumBtn = document.getElementById("createAlbumBtn");
+    const albumUploadBtn = document.getElementById("albumUploadBtn");
+    const albumRefreshBtn = document.getElementById("albumRefreshBtn");
+    const albumStatusText = document.getElementById("albumStatusText");
+    const albumsCount = document.getElementById("albumsCount");
+    const albumFilesList = document.getElementById("albumFilesList");
 
     const lists = {
       images: document.getElementById("imagesList"),
@@ -662,7 +686,10 @@
       codes: document.getElementById("codesCount")
     };
 
-    const mainFolder = "uploads";
+    loginBtn.addEventListener("click", checkPassword);
+    passwordInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") checkPassword();
+    });
 
     uploadBtn.addEventListener("click", uploadFiles);
     refreshBtn.addEventListener("click", loadFiles);
@@ -673,37 +700,53 @@
       statusText.textContent = "Code box cleared.";
     });
 
+    createAlbumBtn.addEventListener("click", createAlbum);
+    albumRefreshBtn.addEventListener("click", loadAlbums);
+    albumUploadBtn.addEventListener("click", uploadToAlbum);
+    albumSelect.addEventListener("change", event => loadAlbumFiles(event.target.value));
+
     document.querySelectorAll(".tab").forEach(tab => {
       tab.addEventListener("click", () => {
         document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
         document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-
         tab.classList.add("active");
         document.getElementById(tab.dataset.tab).classList.add("active");
+
+        if (tab.dataset.tab === "albums") loadAlbums();
       });
     });
+
+    function checkPassword() {
+      if (passwordInput.value === correctPassword) {
+        loginScreen.style.display = "none";
+        passwordInput.value = "";
+        loginError.textContent = "";
+      } else {
+        loginError.textContent = "Incorrect password. Please try again.";
+        passwordInput.value = "";
+      }
+    }
 
     function cleanName(name) {
       return name.replace(/[^a-zA-Z0-9._-]/g, "_");
     }
 
+    function albumCleanName(name) {
+      return name
+        .trim()
+        .replace(/[^a-zA-Z0-9._ -]/g, "_")
+        .replace(/\s+/g, "_");
+    }
+
     function normalizeCodeFileName(name) {
       let safeName = cleanName(name.trim());
-
-      if (!safeName) {
-        safeName = "pasted-code.txt";
-      }
-
-      if (!safeName.includes(".")) {
-        safeName += ".txt";
-      }
-
+      if (!safeName) safeName = "pasted-code.txt";
+      if (!safeName.includes(".")) safeName += ".txt";
       return safeName;
     }
 
     function getCategory(file) {
       const fileName = file.name.toLowerCase();
-
       if (file.type.startsWith("image/")) return "images";
       if (file.type.startsWith("video/")) return "videos";
 
@@ -713,28 +756,57 @@
       ];
 
       if (codeTypes.some(ext => fileName.endsWith(ext))) return "codes";
-
       return "files";
     }
 
     function isCodeFile(fileName) {
-      const name = fileName.toLowerCase();
+      return /\.(txt|html|css|js|json|php|py|java|cpp|c|cs|xml|md)$/i.test(fileName);
+    }
 
-      return (
-        name.endsWith(".txt") ||
-        name.endsWith(".html") ||
-        name.endsWith(".css") ||
-        name.endsWith(".js") ||
-        name.endsWith(".json") ||
-        name.endsWith(".php") ||
-        name.endsWith(".py") ||
-        name.endsWith(".java") ||
-        name.endsWith(".cpp") ||
-        name.endsWith(".c") ||
-        name.endsWith(".cs") ||
-        name.endsWith(".xml") ||
-        name.endsWith(".md")
-      );
+    function albumIsMedia(file) {
+      return file.type.startsWith("image/") || file.type.startsWith("video/");
+    }
+
+    function albumIsImage(fileName) {
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileName);
+    }
+
+    function albumIsVideo(fileName) {
+      return /\.(mp4|webm|ogg|mov|m4v)$/i.test(fileName);
+    }
+
+    function validateVideoSizes(files) {
+      for (const file of files) {
+        if (file.type.startsWith("video/") && file.size > maxVideoMB * 1024 * 1024) {
+          alert(`${file.name} is too large. Max video size is ${maxVideoMB}MB.`);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function getUploadMetadata(file) {
+      return {
+        contentType: file.type || "application/octet-stream",
+        cacheControl: "public,max-age=3600"
+      };
+    }
+
+    function updateCount(category, addBy) {
+      const currentText = counts[category].textContent || "0 files";
+      const currentNumber = parseInt(currentText, 10) || 0;
+      const newNumber = Math.max(0, currentNumber + addBy);
+      counts[category].textContent = `${newNumber} file${newNumber === 1 ? "" : "s"}`;
+    }
+
+    function clearEmptyMessage(category) {
+      const current = lists[category].querySelector(".empty");
+      if (current) current.remove();
+    }
+
+    function setMainProgress(percent) {
+      progressBar.style.width = percent + "%";
+      progressBar.textContent = percent + "%";
     }
 
     async function savePastedCode() {
@@ -748,27 +820,16 @@
 
       saveCodeBtn.disabled = true;
       progressArea.style.display = "block";
-      progressBar.style.width = "0%";
-      progressBar.textContent = "0%";
+      setMainProgress(0);
       statusText.textContent = "Saving pasted code...";
 
       try {
-        const codeFile = new File([code], name, {
-          type: "text/plain"
-        });
-
+        const codeFile = new File([code], name, { type: "text/plain" });
         await uploadOneFile(codeFile, 1, 1);
-
         statusText.textContent = "✅ Code saved successfully!";
         codeFileName.value = "";
         codePasteArea.value = "";
-        await loadFiles();
-
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-        document.querySelector('[data-tab="codes"]').classList.add("active");
-        document.getElementById("codes").classList.add("active");
-
+        switchTab("codes");
       } catch (error) {
         console.error(error);
         statusText.textContent = "❌ Save code error: " + error.message;
@@ -785,22 +846,32 @@
         return;
       }
 
+      if (!validateVideoSizes(files)) return;
+
       uploadBtn.disabled = true;
       progressArea.style.display = "block";
-      progressBar.style.width = "0%";
-      progressBar.textContent = "0%";
+      setMainProgress(0);
       statusText.textContent = "Starting upload...";
 
       try {
-        for (let i = 0; i < files.length; i++) {
-          await uploadOneFile(files[i], i + 1, files.length);
+        const queue = [...files];
+        let started = 0;
+
+        async function worker() {
+          while (queue.length) {
+            const file = queue.shift();
+            started++;
+            await uploadOneFile(file, started, files.length);
+          }
         }
+
+        await Promise.all(
+          Array.from({ length: Math.min(parallelLimit, files.length) }, worker)
+        );
 
         statusText.textContent = "✅ Upload complete!";
         galleryInput.value = "";
         fileInput.value = "";
-        await loadFiles();
-
       } catch (error) {
         console.error(error);
         statusText.textContent = "❌ Upload error: " + error.message;
@@ -813,33 +884,37 @@
       return new Promise((resolve, reject) => {
         const category = getCategory(file);
         const safeName = cleanName(file.name);
-        const fileName = Date.now() + "_" + safeName;
+        const fileName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "_" + safeName;
         const filePath = `${mainFolder}/${category}/${fileName}`;
-
         const fileRef = ref(storage, filePath);
-        const uploadTask = uploadBytesResumable(fileRef, file);
+        const uploadTask = uploadBytesResumable(fileRef, file, getUploadMetadata(file));
 
         statusText.textContent = `Uploading ${current}/${total}: ${file.name}`;
 
         uploadTask.on(
           "state_changed",
-          (snapshot) => {
-            const percent = Math.round(
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            );
-
-            progressBar.style.width = percent + "%";
-            progressBar.textContent = percent + "%";
+          snapshot => {
+            const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            setMainProgress(percent);
           },
-          (error) => reject(error),
-          () => resolve()
+          error => reject(error),
+          async () => {
+            try {
+              const url = await getDownloadURL(uploadTask.snapshot.ref);
+              clearEmptyMessage(category);
+              renderFile(category, uploadTask.snapshot.ref, url, true);
+              updateCount(category, 1);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          }
         );
       });
     }
 
     async function loadFiles() {
       setLoading();
-
       const categories = ["images", "videos", "files", "codes"];
 
       try {
@@ -859,19 +934,13 @@
 
           for (const item of reversed) {
             const url = await getDownloadURL(item);
-            renderFile(category, item, url);
+            renderFile(category, item, url, false);
           }
         }
-
       } catch (error) {
         console.error(error);
-
         Object.keys(lists).forEach(category => {
-          lists[category].innerHTML = `
-            <div class="error">
-              Error loading ${category}: ${error.message}
-            </div>
-          `;
+          lists[category].innerHTML = `<div class="error">Error loading ${category}: ${error.message}</div>`;
         });
       }
     }
@@ -883,20 +952,44 @@
       });
     }
 
-    function renderFile(category, item, url) {
+    function renderFile(category, item, url, prepend = false) {
       const card = document.createElement("div");
       card.className = "file-card";
 
-      let preview = "";
+      const preview = getPreviewHtml(category, item.name, url);
 
+      card.innerHTML = `
+        <div class="file-name"></div>
+        <div class="file-info">📁 ${category}</div>
+        <div class="file-info"></div>
+        ${preview}
+        <div class="actions">
+          <a href="${url}" target="_blank">Open</a>
+          <a href="${url}" download>Download</a>
+          <button class="danger" type="button">Delete</button>
+        </div>
+      `;
+
+      card.querySelector(".file-name").textContent = item.name;
+      card.querySelectorAll(".file-info")[1].textContent = "🔗 " + item.fullPath;
+      card.querySelector("button").addEventListener("click", () => deleteFile(item.fullPath));
+
+      if (prepend) {
+        lists[category].prepend(card);
+      } else {
+        lists[category].appendChild(card);
+      }
+    }
+
+    function getPreviewHtml(category, fileName, url) {
       if (category === "images") {
-        preview = `<div class="preview"><img src="${url}" alt="${item.name}"></div>`;
+        return `<div class="preview"><img src="${url}" alt=""></div>`;
       }
 
       if (category === "videos") {
-        preview = `
+        return `
           <div class="preview">
-            <video controls>
+            <video controls preload="metadata">
               <source src="${url}">
               Your browser does not support video.
             </video>
@@ -904,272 +997,64 @@
         `;
       }
 
-      if (category === "codes" || isCodeFile(item.name)) {
-        preview = `
+      if (category === "codes" || isCodeFile(fileName)) {
+        return `
           <div class="preview">
-            <button class="soft" onclick="previewText('${url}', this)">
-              👀 Preview Code
-            </button>
+            <button class="soft preview-code-btn" type="button" data-url="${url}">👀 Preview Code</button>
           </div>
         `;
       }
 
-      card.innerHTML = `
-        <div class="file-name">${item.name}</div>
-        <div class="file-info">📁 ${category}</div>
-        <div class="file-info">🔗 ${item.fullPath}</div>
-
-        ${preview}
-
-        <div class="actions">
-          <a href="${url}" target="_blank">Open</a>
-          <a href="${url}" download>Download</a>
-          <button class="danger" onclick="deleteFile('${item.fullPath}')">Delete</button>
-        </div>
-      `;
-
-      lists[category].appendChild(card);
+      return "";
     }
 
-    window.previewText = async function(url, button) {
+    document.addEventListener("click", async event => {
+      if (!event.target.classList.contains("preview-code-btn")) return;
+
+      const button = event.target;
+      const url = button.dataset.url;
+
       try {
         button.disabled = true;
         button.textContent = "Loading...";
-
         const response = await fetch(url);
         const text = await response.text();
-
         const pre = document.createElement("pre");
         pre.textContent = text;
-
         button.parentElement.appendChild(pre);
         button.remove();
-
       } catch (error) {
         alert("Cannot preview this file.");
         button.disabled = false;
         button.textContent = "👀 Preview Code";
       }
-    };
+    });
 
-    window.deleteFile = async function(fullPath) {
+    async function deleteFile(fullPath) {
       const sure = confirm("Are you sure you want to delete this file?");
-
       if (!sure) return;
 
       try {
-        const fileRef = ref(storage, fullPath);
-        await deleteObject(fileRef);
-
+        await deleteObject(ref(storage, fullPath));
         alert("Deleted successfully 🌸");
         await loadFiles();
-
       } catch (error) {
         alert("Delete error: " + error.message);
       }
-    };
-
-    loadFiles();
-  </script>
-
-
-  <!-- ADD-ON ONLY: Albums feature. Paste before </body>. -->
-  <style>
-    .album-box {
-      margin-top: 18px;
-      padding: 16px;
-      border-radius: 22px;
-      border: 2px dashed #c4b5fd;
-      background: linear-gradient(135deg, #fff7fb, #eef2ff);
     }
 
-    .album-controls {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .album-controls input,
-    .album-box select {
-      width: 100%;
-      padding: 14px;
-      border-radius: 16px;
-      border: 2px solid #fbcfe8;
-      background: #ffffff;
-      color: #831843;
-      font-size: 14px;
-      font-weight: 800;
-      outline: none;
-    }
-
-    .album-toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 12px 0;
-    }
-
-    .album-card {
-      background: rgba(255, 255, 255, 0.9);
-      border: 2px solid #ddd6fe;
-      border-radius: 22px;
-      padding: 14px;
-      box-shadow: 0 12px 28px rgba(168, 85, 247, 0.12);
-      overflow: hidden;
-    }
-
-    .album-title {
-      font-weight: 900;
-      color: #831843;
-      margin-bottom: 8px;
-      word-break: break-word;
-    }
-
-    @media (max-width: 650px) {
-      .album-controls {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-
-  <script type="module">
-    import {
-      initializeApp,
-      getApps,
-      getApp
-    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-
-    import {
-      getStorage,
-      ref,
-      uploadBytesResumable,
-      getDownloadURL,
-      listAll,
-      deleteObject
-    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
-
-    const albumsFirebaseConfig = {
-      apiKey: "AIzaSyD-yBalhCNsz9szFun2B2bWdnsWK8K_oGA",
-      authDomain: "quantum-30307.firebaseapp.com",
-      databaseURL: "https://quantum-30307-default-rtdb.firebaseio.com",
-      projectId: "quantum-30307",
-      storageBucket: "quantum-30307.firebasestorage.app",
-      messagingSenderId: "886693818570",
-      appId: "1:886693818570:web:e2ab208ec4e9f896338433",
-      measurementId: "G-4EXK469FYB"
-    };
-
-    const albumsApp = getApps().length ? getApp() : initializeApp(albumsFirebaseConfig);
-    const albumsStorage = getStorage(albumsApp);
-    const albumsMainFolder = "uploads/albums";
-
-    function albumCleanName(name) {
-      return name
-        .trim()
-        .replace(/[^a-zA-Z0-9._ -]/g, "_")
-        .replace(/\s+/g, "_");
-    }
-
-    function albumIsMedia(file) {
-      return file.type.startsWith("image/") || file.type.startsWith("video/");
-    }
-
-    function albumIsImage(fileName) {
-      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileName);
-    }
-
-    function albumIsVideo(fileName) {
-      return /\.(mp4|webm|ogg|mov|m4v)$/i.test(fileName);
-    }
-
-    function injectAlbumsUI() {
-      const tabs = document.querySelector(".tabs");
-      const app = document.querySelector(".app");
-
-      if (!tabs || !app) return;
-      if (document.querySelector('[data-tab="albums"]')) return;
-
-      tabs.insertAdjacentHTML(
-        "beforeend",
-        `<div class="tab" data-tab="albums">📚 Albums</div>`
-      );
-
-      const footerNote = document.querySelector(".footer-note");
-
-      const albumsHTML = `
-        <div id="albums" class="section">
-          <div class="section-title">
-            <h2>📚 Albums</h2>
-            <span class="badge" id="albumsCount">0 albums</span>
-          </div>
-
-          <div class="album-box">
-            <label class="file-label" for="albumNameInput">🌷 Create / Choose Album</label>
-
-            <div class="album-controls">
-              <input
-                type="text"
-                id="albumNameInput"
-                placeholder="Example: Family Trip 2026"
-              />
-              <button id="createAlbumBtn" type="button">➕ Create Album</button>
-            </div>
-
-            <label class="file-label" for="albumSelect">📚 Select Album</label>
-            <select id="albumSelect">
-              <option value="">Loading albums...</option>
-            </select>
-
-            <label class="file-label" for="albumUploadInput">🖼️ Upload Photos / Videos to Album</label>
-            <input
-              type="file"
-              id="albumUploadInput"
-              multiple
-              accept="image/*,video/*"
-            />
-
-            <div class="album-toolbar">
-              <button id="albumUploadBtn" type="button">🌸 Upload to Album</button>
-              <button id="albumRefreshBtn" type="button" class="soft">🔄 Refresh Albums</button>
-            </div>
-
-            <div class="status" id="albumStatusText"></div>
-          </div>
-
-          <div class="grid" id="albumFilesList"></div>
-        </div>
-      `;
-
-      if (footerNote) {
-        footerNote.insertAdjacentHTML("beforebegin", albumsHTML);
-      } else {
-        app.insertAdjacentHTML("beforeend", albumsHTML);
-      }
-
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-          document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-
-          tab.classList.add("active");
-          document.getElementById(tab.dataset.tab).classList.add("active");
-
-          if (tab.dataset.tab === "albums") {
-            loadAlbums();
-          }
-        });
-      });
+    function switchTab(tabName) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+      document.getElementById(tabName).classList.add("active");
     }
 
     function setAlbumStatus(message) {
-      const albumStatusText = document.getElementById("albumStatusText");
-      if (albumStatusText) albumStatusText.textContent = message;
+      albumStatusText.textContent = message;
     }
 
     async function createAlbum() {
-      const albumNameInput = document.getElementById("albumNameInput");
-      const albumSelect = document.getElementById("albumSelect");
       const albumName = albumCleanName(albumNameInput.value);
 
       if (!albumName) {
@@ -1177,51 +1062,40 @@
         return;
       }
 
+      createAlbumBtn.disabled = true;
+
       try {
         setAlbumStatus("Creating album...");
+        const placeholder = new File(["Album created"], ".album-placeholder.txt", { type: "text/plain" });
+        const placeholderRef = ref(storage, `${albumsMainFolder}/${albumName}/.album-placeholder.txt`);
 
-        const placeholder = new File(["Album created"], ".album-placeholder.txt", {
-          type: "text/plain"
-        });
-
-        const placeholderRef = ref(
-          albumsStorage,
-          `${albumsMainFolder}/${albumName}/.album-placeholder.txt`
-        );
-
-        await new Promise((resolve, reject) => {
-          const uploadTask = uploadBytesResumable(placeholderRef, placeholder);
-          uploadTask.on(
-            "state_changed",
-            null,
-            error => reject(error),
-            () => resolve()
-          );
-        });
+        await uploadSmallFile(placeholderRef, placeholder);
 
         albumNameInput.value = "";
         await loadAlbums();
         albumSelect.value = albumName;
         await loadAlbumFiles(albumName);
-
         setAlbumStatus("✅ Album created successfully!");
       } catch (error) {
         console.error(error);
         setAlbumStatus("❌ Create album error: " + error.message);
       }
+
+      createAlbumBtn.disabled = false;
+    }
+
+    function uploadSmallFile(fileRef, file) {
+      return new Promise((resolve, reject) => {
+        const uploadTask = uploadBytesResumable(fileRef, file, getUploadMetadata(file));
+        uploadTask.on("state_changed", null, reject, resolve);
+      });
     }
 
     async function loadAlbums() {
-      const albumSelect = document.getElementById("albumSelect");
-      const albumsCount = document.getElementById("albumsCount");
-      const albumFilesList = document.getElementById("albumFilesList");
-
-      if (!albumSelect || !albumsCount || !albumFilesList) return;
-
       albumSelect.innerHTML = `<option value="">Loading albums...</option>`;
 
       try {
-        const rootRef = ref(albumsStorage, albumsMainFolder);
+        const rootRef = ref(storage, albumsMainFolder);
         const result = await listAll(rootRef);
         const albumNames = result.prefixes.map(prefix => prefix.name).sort();
 
@@ -1233,6 +1107,7 @@
           return;
         }
 
+        const currentValue = albumSelect.value;
         albumSelect.innerHTML = `<option value="">Choose an album</option>`;
 
         albumNames.forEach(name => {
@@ -1242,7 +1117,13 @@
           albumSelect.appendChild(option);
         });
 
-        albumFilesList.innerHTML = `<div class="empty">Choose an album to view files.</div>`;
+        if (currentValue && albumNames.includes(currentValue)) {
+          albumSelect.value = currentValue;
+        }
+
+        if (!albumSelect.value) {
+          albumFilesList.innerHTML = `<div class="empty">Choose an album to view files.</div>`;
+        }
       } catch (error) {
         console.error(error);
         albumSelect.innerHTML = `<option value="">Error loading albums</option>`;
@@ -1251,8 +1132,6 @@
     }
 
     async function uploadToAlbum() {
-      const albumSelect = document.getElementById("albumSelect");
-      const albumUploadInput = document.getElementById("albumUploadInput");
       const albumName = albumSelect.value;
       const files = [...albumUploadInput.files];
 
@@ -1273,43 +1152,68 @@
         return;
       }
 
+      if (!validateVideoSizes(mediaFiles)) return;
+
+      albumUploadBtn.disabled = true;
+
       try {
         setAlbumStatus("Starting album upload...");
+        clearAlbumEmptyMessage();
 
-        for (let i = 0; i < mediaFiles.length; i++) {
-          const file = mediaFiles[i];
-          const safeName = albumCleanName(file.name);
-          const fileName = Date.now() + "_" + safeName;
-          const filePath = `${albumsMainFolder}/${albumName}/${fileName}`;
-          const fileRef = ref(albumsStorage, filePath);
+        const queue = [...mediaFiles];
+        let started = 0;
 
-          setAlbumStatus(`Uploading ${i + 1}/${mediaFiles.length}: ${file.name}`);
-
-          await new Promise((resolve, reject) => {
-            const uploadTask = uploadBytesResumable(fileRef, file);
-            uploadTask.on(
-              "state_changed",
-              null,
-              error => reject(error),
-              () => resolve()
-            );
-          });
+        async function worker() {
+          while (queue.length) {
+            const file = queue.shift();
+            started++;
+            await uploadOneAlbumFile(albumName, file, started, mediaFiles.length);
+          }
         }
 
+        await Promise.all(
+          Array.from({ length: Math.min(parallelLimit, mediaFiles.length) }, worker)
+        );
+
         albumUploadInput.value = "";
-        await loadAlbumFiles(albumName);
         setAlbumStatus("✅ Album upload complete!");
       } catch (error) {
         console.error(error);
         setAlbumStatus("❌ Album upload error: " + error.message);
       }
+
+      albumUploadBtn.disabled = false;
+    }
+
+    function uploadOneAlbumFile(albumName, file, current, total) {
+      return new Promise((resolve, reject) => {
+        const safeName = albumCleanName(file.name);
+        const fileName = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "_" + safeName;
+        const filePath = `${albumsMainFolder}/${albumName}/${fileName}`;
+        const fileRef = ref(storage, filePath);
+        const uploadTask = uploadBytesResumable(fileRef, file, getUploadMetadata(file));
+
+        setAlbumStatus(`Uploading ${current}/${total}: ${file.name}`);
+
+        uploadTask.on(
+          "state_changed",
+          null,
+          error => reject(error),
+          async () => {
+            try {
+              const url = await getDownloadURL(uploadTask.snapshot.ref);
+              clearAlbumEmptyMessage();
+              renderAlbumFile(albumName, uploadTask.snapshot.ref, url, true);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          }
+        );
+      });
     }
 
     async function loadAlbumFiles(albumName) {
-      const albumFilesList = document.getElementById("albumFilesList");
-
-      if (!albumFilesList) return;
-
       if (!albumName) {
         albumFilesList.innerHTML = `<div class="empty">Choose an album to view files.</div>`;
         return;
@@ -1318,7 +1222,7 @@
       albumFilesList.innerHTML = `<div class="empty">Loading album files...</div>`;
 
       try {
-        const folderRef = ref(albumsStorage, `${albumsMainFolder}/${albumName}`);
+        const folderRef = ref(storage, `${albumsMainFolder}/${albumName}`);
         const result = await listAll(folderRef);
         const items = result.items.filter(item => item.name !== ".album-placeholder.txt");
 
@@ -1332,7 +1236,7 @@
 
         for (const item of reversed) {
           const url = await getDownloadURL(item);
-          renderAlbumFile(albumName, item, url);
+          renderAlbumFile(albumName, item, url, false);
         }
       } catch (error) {
         console.error(error);
@@ -1340,21 +1244,24 @@
       }
     }
 
-    function renderAlbumFile(albumName, item, url) {
-      const albumFilesList = document.getElementById("albumFilesList");
+    function clearAlbumEmptyMessage() {
+      const empty = albumFilesList.querySelector(".empty");
+      if (empty) empty.remove();
+    }
+
+    function renderAlbumFile(albumName, item, url, prepend = false) {
       const card = document.createElement("div");
       card.className = "album-card";
 
       let preview = "";
-
       if (albumIsImage(item.name)) {
-        preview = `<div class="preview"><img src="${url}" alt="${item.name}"></div>`;
+        preview = `<div class="preview"><img src="${url}" alt=""></div>`;
       }
 
       if (albumIsVideo(item.name)) {
         preview = `
           <div class="preview">
-            <video controls>
+            <video controls preload="metadata">
               <source src="${url}">
               Your browser does not support video.
             </video>
@@ -1363,12 +1270,10 @@
       }
 
       card.innerHTML = `
-        <div class="album-title">${item.name}</div>
+        <div class="album-title"></div>
         <div class="file-info">📚 Album: ${albumName.replaceAll("_", " ")}</div>
-        <div class="file-info">🔗 ${item.fullPath}</div>
-
+        <div class="file-info"></div>
         ${preview}
-
         <div class="actions">
           <a href="${url}" target="_blank">Open</a>
           <a href="${url}" download>Download</a>
@@ -1376,34 +1281,30 @@
         </div>
       `;
 
+      card.querySelector(".album-title").textContent = item.name;
+      card.querySelectorAll(".file-info")[1].textContent = "🔗 " + item.fullPath;
       card.querySelector("button").addEventListener("click", async () => {
         const sure = confirm("Delete this file from album?");
         if (!sure) return;
 
         try {
-          await deleteObject(ref(albumsStorage, item.fullPath));
-          await loadAlbumFiles(albumName);
+          await deleteObject(ref(storage, item.fullPath));
+          card.remove();
           setAlbumStatus("Deleted successfully 🌸");
         } catch (error) {
           alert("Delete error: " + error.message);
         }
       });
 
-      albumFilesList.appendChild(card);
+      if (prepend) {
+        albumFilesList.prepend(card);
+      } else {
+        albumFilesList.appendChild(card);
+      }
     }
 
-    injectAlbumsUI();
-
-    document.getElementById("createAlbumBtn").addEventListener("click", createAlbum);
-    document.getElementById("albumRefreshBtn").addEventListener("click", loadAlbums);
-    document.getElementById("albumUploadBtn").addEventListener("click", uploadToAlbum);
-
-    document.getElementById("albumSelect").addEventListener("change", event => {
-      loadAlbumFiles(event.target.value);
-    });
-
+    loadFiles();
     loadAlbums();
   </script>
-
 </body>
 </html>
