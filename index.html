@@ -971,5 +971,439 @@
 
     loadFiles();
   </script>
+
+
+  <!-- ADD-ON ONLY: Albums feature. Paste before </body>. -->
+  <style>
+    .album-box {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 22px;
+      border: 2px dashed #c4b5fd;
+      background: linear-gradient(135deg, #fff7fb, #eef2ff);
+    }
+
+    .album-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .album-controls input,
+    .album-box select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      border: 2px solid #fbcfe8;
+      background: #ffffff;
+      color: #831843;
+      font-size: 14px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .album-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .album-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #ddd6fe;
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(168, 85, 247, 0.12);
+      overflow: hidden;
+    }
+
+    .album-title {
+      font-weight: 900;
+      color: #831843;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    @media (max-width: 650px) {
+      .album-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script type="module">
+    import {
+      initializeApp,
+      getApps,
+      getApp
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+      listAll,
+      deleteObject
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+
+    const albumsFirebaseConfig = {
+      apiKey: "AIzaSyD-yBalhCNsz9szFun2B2bWdnsWK8K_oGA",
+      authDomain: "quantum-30307.firebaseapp.com",
+      databaseURL: "https://quantum-30307-default-rtdb.firebaseio.com",
+      projectId: "quantum-30307",
+      storageBucket: "quantum-30307.firebasestorage.app",
+      messagingSenderId: "886693818570",
+      appId: "1:886693818570:web:e2ab208ec4e9f896338433",
+      measurementId: "G-4EXK469FYB"
+    };
+
+    const albumsApp = getApps().length ? getApp() : initializeApp(albumsFirebaseConfig);
+    const albumsStorage = getStorage(albumsApp);
+    const albumsMainFolder = "uploads/albums";
+
+    function albumCleanName(name) {
+      return name
+        .trim()
+        .replace(/[^a-zA-Z0-9._ -]/g, "_")
+        .replace(/\s+/g, "_");
+    }
+
+    function albumIsMedia(file) {
+      return file.type.startsWith("image/") || file.type.startsWith("video/");
+    }
+
+    function albumIsImage(fileName) {
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(fileName);
+    }
+
+    function albumIsVideo(fileName) {
+      return /\.(mp4|webm|ogg|mov|m4v)$/i.test(fileName);
+    }
+
+    function injectAlbumsUI() {
+      const tabs = document.querySelector(".tabs");
+      const app = document.querySelector(".app");
+
+      if (!tabs || !app) return;
+      if (document.querySelector('[data-tab="albums"]')) return;
+
+      tabs.insertAdjacentHTML(
+        "beforeend",
+        `<div class="tab" data-tab="albums">📚 Albums</div>`
+      );
+
+      const footerNote = document.querySelector(".footer-note");
+
+      const albumsHTML = `
+        <div id="albums" class="section">
+          <div class="section-title">
+            <h2>📚 Albums</h2>
+            <span class="badge" id="albumsCount">0 albums</span>
+          </div>
+
+          <div class="album-box">
+            <label class="file-label" for="albumNameInput">🌷 Create / Choose Album</label>
+
+            <div class="album-controls">
+              <input
+                type="text"
+                id="albumNameInput"
+                placeholder="Example: Family Trip 2026"
+              />
+              <button id="createAlbumBtn" type="button">➕ Create Album</button>
+            </div>
+
+            <label class="file-label" for="albumSelect">📚 Select Album</label>
+            <select id="albumSelect">
+              <option value="">Loading albums...</option>
+            </select>
+
+            <label class="file-label" for="albumUploadInput">🖼️ Upload Photos / Videos to Album</label>
+            <input
+              type="file"
+              id="albumUploadInput"
+              multiple
+              accept="image/*,video/*"
+            />
+
+            <div class="album-toolbar">
+              <button id="albumUploadBtn" type="button">🌸 Upload to Album</button>
+              <button id="albumRefreshBtn" type="button" class="soft">🔄 Refresh Albums</button>
+            </div>
+
+            <div class="status" id="albumStatusText"></div>
+          </div>
+
+          <div class="grid" id="albumFilesList"></div>
+        </div>
+      `;
+
+      if (footerNote) {
+        footerNote.insertAdjacentHTML("beforebegin", albumsHTML);
+      } else {
+        app.insertAdjacentHTML("beforeend", albumsHTML);
+      }
+
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+
+          tab.classList.add("active");
+          document.getElementById(tab.dataset.tab).classList.add("active");
+
+          if (tab.dataset.tab === "albums") {
+            loadAlbums();
+          }
+        });
+      });
+    }
+
+    function setAlbumStatus(message) {
+      const albumStatusText = document.getElementById("albumStatusText");
+      if (albumStatusText) albumStatusText.textContent = message;
+    }
+
+    async function createAlbum() {
+      const albumNameInput = document.getElementById("albumNameInput");
+      const albumSelect = document.getElementById("albumSelect");
+      const albumName = albumCleanName(albumNameInput.value);
+
+      if (!albumName) {
+        alert("Please type an album name first.");
+        return;
+      }
+
+      try {
+        setAlbumStatus("Creating album...");
+
+        const placeholder = new File(["Album created"], ".album-placeholder.txt", {
+          type: "text/plain"
+        });
+
+        const placeholderRef = ref(
+          albumsStorage,
+          `${albumsMainFolder}/${albumName}/.album-placeholder.txt`
+        );
+
+        await new Promise((resolve, reject) => {
+          const uploadTask = uploadBytesResumable(placeholderRef, placeholder);
+          uploadTask.on(
+            "state_changed",
+            null,
+            error => reject(error),
+            () => resolve()
+          );
+        });
+
+        albumNameInput.value = "";
+        await loadAlbums();
+        albumSelect.value = albumName;
+        await loadAlbumFiles(albumName);
+
+        setAlbumStatus("✅ Album created successfully!");
+      } catch (error) {
+        console.error(error);
+        setAlbumStatus("❌ Create album error: " + error.message);
+      }
+    }
+
+    async function loadAlbums() {
+      const albumSelect = document.getElementById("albumSelect");
+      const albumsCount = document.getElementById("albumsCount");
+      const albumFilesList = document.getElementById("albumFilesList");
+
+      if (!albumSelect || !albumsCount || !albumFilesList) return;
+
+      albumSelect.innerHTML = `<option value="">Loading albums...</option>`;
+
+      try {
+        const rootRef = ref(albumsStorage, albumsMainFolder);
+        const result = await listAll(rootRef);
+        const albumNames = result.prefixes.map(prefix => prefix.name).sort();
+
+        albumsCount.textContent = `${albumNames.length} album${albumNames.length === 1 ? "" : "s"}`;
+
+        if (!albumNames.length) {
+          albumSelect.innerHTML = `<option value="">No albums yet</option>`;
+          albumFilesList.innerHTML = `<div class="empty">No albums yet 🌷</div>`;
+          return;
+        }
+
+        albumSelect.innerHTML = `<option value="">Choose an album</option>`;
+
+        albumNames.forEach(name => {
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name.replaceAll("_", " ");
+          albumSelect.appendChild(option);
+        });
+
+        albumFilesList.innerHTML = `<div class="empty">Choose an album to view files.</div>`;
+      } catch (error) {
+        console.error(error);
+        albumSelect.innerHTML = `<option value="">Error loading albums</option>`;
+        albumFilesList.innerHTML = `<div class="error">Error loading albums: ${error.message}</div>`;
+      }
+    }
+
+    async function uploadToAlbum() {
+      const albumSelect = document.getElementById("albumSelect");
+      const albumUploadInput = document.getElementById("albumUploadInput");
+      const albumName = albumSelect.value;
+      const files = [...albumUploadInput.files];
+
+      if (!albumName) {
+        alert("Please choose an album first.");
+        return;
+      }
+
+      if (!files.length) {
+        alert("Please select photos or videos first.");
+        return;
+      }
+
+      const mediaFiles = files.filter(albumIsMedia);
+
+      if (!mediaFiles.length) {
+        alert("Albums only accept images and videos.");
+        return;
+      }
+
+      try {
+        setAlbumStatus("Starting album upload...");
+
+        for (let i = 0; i < mediaFiles.length; i++) {
+          const file = mediaFiles[i];
+          const safeName = albumCleanName(file.name);
+          const fileName = Date.now() + "_" + safeName;
+          const filePath = `${albumsMainFolder}/${albumName}/${fileName}`;
+          const fileRef = ref(albumsStorage, filePath);
+
+          setAlbumStatus(`Uploading ${i + 1}/${mediaFiles.length}: ${file.name}`);
+
+          await new Promise((resolve, reject) => {
+            const uploadTask = uploadBytesResumable(fileRef, file);
+            uploadTask.on(
+              "state_changed",
+              null,
+              error => reject(error),
+              () => resolve()
+            );
+          });
+        }
+
+        albumUploadInput.value = "";
+        await loadAlbumFiles(albumName);
+        setAlbumStatus("✅ Album upload complete!");
+      } catch (error) {
+        console.error(error);
+        setAlbumStatus("❌ Album upload error: " + error.message);
+      }
+    }
+
+    async function loadAlbumFiles(albumName) {
+      const albumFilesList = document.getElementById("albumFilesList");
+
+      if (!albumFilesList) return;
+
+      if (!albumName) {
+        albumFilesList.innerHTML = `<div class="empty">Choose an album to view files.</div>`;
+        return;
+      }
+
+      albumFilesList.innerHTML = `<div class="empty">Loading album files...</div>`;
+
+      try {
+        const folderRef = ref(albumsStorage, `${albumsMainFolder}/${albumName}`);
+        const result = await listAll(folderRef);
+        const items = result.items.filter(item => item.name !== ".album-placeholder.txt");
+
+        if (!items.length) {
+          albumFilesList.innerHTML = `<div class="empty">This album is empty 🌷</div>`;
+          return;
+        }
+
+        albumFilesList.innerHTML = "";
+        const reversed = [...items].reverse();
+
+        for (const item of reversed) {
+          const url = await getDownloadURL(item);
+          renderAlbumFile(albumName, item, url);
+        }
+      } catch (error) {
+        console.error(error);
+        albumFilesList.innerHTML = `<div class="error">Error loading album: ${error.message}</div>`;
+      }
+    }
+
+    function renderAlbumFile(albumName, item, url) {
+      const albumFilesList = document.getElementById("albumFilesList");
+      const card = document.createElement("div");
+      card.className = "album-card";
+
+      let preview = "";
+
+      if (albumIsImage(item.name)) {
+        preview = `<div class="preview"><img src="${url}" alt="${item.name}"></div>`;
+      }
+
+      if (albumIsVideo(item.name)) {
+        preview = `
+          <div class="preview">
+            <video controls>
+              <source src="${url}">
+              Your browser does not support video.
+            </video>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="album-title">${item.name}</div>
+        <div class="file-info">📚 Album: ${albumName.replaceAll("_", " ")}</div>
+        <div class="file-info">🔗 ${item.fullPath}</div>
+
+        ${preview}
+
+        <div class="actions">
+          <a href="${url}" target="_blank">Open</a>
+          <a href="${url}" download>Download</a>
+          <button class="danger" type="button">Delete</button>
+        </div>
+      `;
+
+      card.querySelector("button").addEventListener("click", async () => {
+        const sure = confirm("Delete this file from album?");
+        if (!sure) return;
+
+        try {
+          await deleteObject(ref(albumsStorage, item.fullPath));
+          await loadAlbumFiles(albumName);
+          setAlbumStatus("Deleted successfully 🌸");
+        } catch (error) {
+          alert("Delete error: " + error.message);
+        }
+      });
+
+      albumFilesList.appendChild(card);
+    }
+
+    injectAlbumsUI();
+
+    document.getElementById("createAlbumBtn").addEventListener("click", createAlbum);
+    document.getElementById("albumRefreshBtn").addEventListener("click", loadAlbums);
+    document.getElementById("albumUploadBtn").addEventListener("click", uploadToAlbum);
+
+    document.getElementById("albumSelect").addEventListener("change", event => {
+      loadAlbumFiles(event.target.value);
+    });
+
+    loadAlbums();
+  </script>
+
 </body>
 </html>
