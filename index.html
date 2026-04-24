@@ -641,7 +641,6 @@
 
     const mainFolder = "uploads";
     const albumsMainFolder = "uploads/albums";
-    const maxVideoMB = 100;
     const parallelLimit = 2;
 
     const loginScreen = document.getElementById("loginScreen");
@@ -775,16 +774,6 @@
       return /\.(mp4|webm|ogg|mov|m4v)$/i.test(fileName);
     }
 
-    function validateVideoSizes(files) {
-      for (const file of files) {
-        if (file.type.startsWith("video/") && file.size > maxVideoMB * 1024 * 1024) {
-          alert(`${file.name} is too large. Max video size is ${maxVideoMB}MB.`);
-          return false;
-        }
-      }
-      return true;
-    }
-
     function getUploadMetadata(file) {
       return {
         contentType: file.type || "application/octet-stream",
@@ -845,8 +834,6 @@
         alert("Please select a file first.");
         return;
       }
-
-      if (!validateVideoSizes(files)) return;
 
       uploadBtn.disabled = true;
       progressArea.style.display = "block";
@@ -1151,8 +1138,6 @@
         alert("Albums only accept images and videos.");
         return;
       }
-
-      if (!validateVideoSizes(mediaFiles)) return;
 
       albumUploadBtn.disabled = true;
 
