@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ceb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Fionna Cute Storage</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      color: #4b244a;
+      background:
+        radial-gradient(circle at top left, #ffe4f3, transparent 35%),
+        radial-gradient(circle at top right, #dbeafe, transparent 35%),
+        linear-gradient(135deg, #fff1f8, #eef2ff, #ecfeff);
+    }
+
+    .app {
+      max-width: 1050px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: 0 25px 70px rgba(236, 72, 153, 0.2);
+    }
+
+    .hero {
+      text-align: center;
+      padding: 18px 10px;
+    }
+
+    .logo {
+      width: 82px;
+      height: 82px;
+      margin: auto;
+      border-radius: 28px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #ff8cc6, #a78bfa);
+      color: white;
+      font-size: 38px;
+      box-shadow: 0 15px 30px rgba(236, 72, 153, 0.3);
+    }
+
+    h1 {
+      margin: 14px 0 6px;
+      font-size: 34px;
+      color: #831843;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #7c3aed;
+      font-size: 15px;
+    }
+
+    .upload-box {
+      margin-top: 20px;
+      background: linear-gradient(135deg, #fff7fb, #eef2ff);
+      border: 2px dashed #f9a8d4;
+      border-radius: 24px;
+      padding: 18px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      border: 2px solid #fbcfe8;
+      background: #ffffff;
+      color: #831843;
+      margin-bottom: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      box-shadow: 0 10px 20px rgba(236, 72, 153, 0.22);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.94;
+    }
+
+    button:disabled {
+      background: #cbd5e1;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .danger {
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+    }
+
+    .soft {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+    }
+
+    .progress-area {
+      margin-top: 16px;
+      display: none;
+    }
+
+    .progress-bg {
+      width: 100%;
+      height: 24px;
+      background: #fce7f3;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #f9a8d4;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #fb7185, #a78bfa, #38bdf8);
+      text-align: center;
+      line-height: 24px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      transition: 0.25s;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #7c3aed;
+      text-align: center;
+      word-break: break-word;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 22px 0 18px;
+    }
+
+    .tab {
+      background: white;
+      border: 2px solid #fbcfe8;
+      color: #831843;
+      border-radius: 18px;
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(236, 72, 153, 0.1);
+    }
+
+    .tab.active {
+      color: white;
+      border-color: transparent;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    }
+
+    .section {
+      display: none;
+      animation: fade 0.25s ease-in-out;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 20px 0 12px;
+      color: #831843;
+    }
+
+    .badge {
+      background: #fce7f3;
+      color: #be185d;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .file-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #fbcfe8;
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(168, 85, 247, 0.12);
+      overflow: hidden;
+    }
+
+    .file-name {
+      font-weight: 900;
+      font-size: 14px;
+      color: #831843;
+      word-break: break-word;
+      margin-bottom: 7px;
+    }
+
+    .file-info {
+      color: #7c3aed;
+      font-size: 12px;
+      margin-top: 5px;
+      word-break: break-word;
+    }
+
+    .preview {
+      margin-top: 10px;
+    }
+
+    img {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #fdf2f8;
+      border: 1px solid #fbcfe8;
+    }
+
+    video {
+      width: 100%;
+      max-height: 260px;
+      border-radius: 16px;
+      background: black;
+    }
+
+    pre {
+      background: #1e1b4b;
+      color: #e0e7ff;
+      padding: 12px;
+      border-radius: 14px;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .actions a {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 10px 13px;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .actions button {
+      padding: 10px 13px;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .empty, .error {
+      text-align: center;
+      padding: 22px;
+      border-radius: 20px;
+      background: #fff7fb;
+      border: 2px dashed #f9a8d4;
+      color: #be185d;
+      font-weight: 800;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      text-align: center;
+      color: #9d174d;
+      font-size: 13px;
+    }
+
+    @media (max-width: 650px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        padding: 15px;
+        border-radius: 22px;
+      }
+
+      h1 {
+        font-size: 27px;
+      }
+
+      .tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="hero">
+      <div class="logo">☁️</div>
+      <h1>Fionna Cute Storage</h1>
+      <p class="subtitle">Cute file cloud para sa images, videos, codes, ug documents ✨</p>
+    </div>
+
+    <div class="upload-box">
+      <input
+        type="file"
+        id="fileInput"
+        multiple
+        accept="image/*,video/*,.html,.css,.js,.json,.txt,.php,.py,.java,.cpp,.c,.cs,.xml,.md,.pdf,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+      />
+
+      <div class="button-row">
+        <button id="uploadBtn">🌸 Upload Files</button>
+        <button id="refreshBtn" class="soft">🔄 Refresh</button>
+      </div>
+
+      <div class="progress-area" id="progressArea">
+        <div class="progress-bg">
+          <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+      </div>
+
+      <div class="status" id="statusText"></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="images">🖼️ Images</div>
+      <div class="tab" data-tab="videos">🎬 Videos</div>
+      <div class="tab" data-tab="files">📄 Files</div>
+      <div class="tab" data-tab="codes">💻 Codes</div>
+    </div>
+
+    <div id="images" class="section active">
+      <div class="section-title">
+        <h2>🖼️ Images</h2>
+        <span class="badge" id="imagesCount">0 files</span>
+      </div>
+      <div class="grid" id="imagesList"></div>
+    </div>
+
+    <div id="videos" class="section">
+      <div class="section-title">
+        <h2>🎬 Videos</h2>
+        <span class="badge" id="videosCount">0 files</span>
+      </div>
+      <div class="grid" id="videosList"></div>
+    </div>
+
+    <div id="files" class="section">
+      <div class="section-title">
+        <h2>📄 Files</h2>
+        <span class="badge" id="filesCount">0 files</span>
+      </div>
+      <div class="grid" id="filesList"></div>
+    </div>
+
+    <div id="codes" class="section">
+      <div class="section-title">
+        <h2>💻 Codes</h2>
+        <span class="badge" id="codesCount">0 files</span>
+      </div>
+      <div class="grid" id="codesList"></div>
+    </div>
+
+    <p class="footer-note">
+      Reminder: public rules are for testing only. Secure it later with login 🔐
+    </p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+
+    import {
+      getStorage,
+      ref,
+      uploadBytesResumable,
+      getDownloadURL,
+      listAll,
+      deleteObject
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-yBalhCNsz9szFun2B2bWdnsWK8K_oGA",
+      authDomain: "quantum-30307.firebaseapp.com",
+      databaseURL: "https://quantum-30307-default-rtdb.firebaseio.com",
+      projectId: "quantum-30307",
+      storageBucket: "quantum-30307.firebasestorage.app",
+      messagingSenderId: "886693818570",
+      appId: "1:886693818570:web:e2ab208ec4e9f896338433",
+      measurementId: "G-4EXK469FYB"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const progressArea = document.getElementById("progressArea");
+    const progressBar = document.getElementById("progressBar");
+    const statusText = document.getElementById("statusText");
+
+    const lists = {
+      images: document.getElementById("imagesList"),
+      videos: document.getElementById("videosList"),
+      files: document.getElementById("filesList"),
+      codes: document.getElementById("codesList")
+    };
+
+    const counts = {
+      images: document.getElementById("imagesCount"),
+      videos: document.getElementById("videosCount"),
+      files: document.getElementById("filesCount"),
+      codes: document.getElementById("codesCount")
+    };
+
+    const mainFolder = "uploads";
+
+    uploadBtn.addEventListener("click", uploadFiles);
+    refreshBtn.addEventListener("click", loadFiles);
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.tab).classList.add("active");
+      });
+    });
+
+    function cleanName(name) {
+      return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    }
+
+    function getCategory(file) {
+      const fileName = file.name.toLowerCase();
+
+      if (file.type.startsWith("image/")) return "images";
+      if (file.type.startsWith("video/")) return "videos";
+
+      const codeTypes = [
+        ".html", ".css", ".js", ".json", ".txt", ".php",
+        ".py", ".java", ".cpp", ".c", ".cs", ".xml", ".md"
+      ];
+
+      if (codeTypes.some(ext => fileName.endsWith(ext))) return "codes";
+
+      return "files";
+    }
+
+    function isCodeFile(fileName) {
+      const name = fileName.toLowerCase();
+
+      return (
+        name.endsWith(".txt") ||
+        name.endsWith(".html") ||
+        name.endsWith(".css") ||
+        name.endsWith(".js") ||
+        name.endsWith(".json") ||
+        name.endsWith(".php") ||
+        name.endsWith(".py") ||
+        name.endsWith(".java") ||
+        name.endsWith(".cpp") ||
+        name.endsWith(".c") ||
+        name.endsWith(".cs") ||
+        name.endsWith(".xml") ||
+        name.endsWith(".md")
+      );
+    }
+
+    async function uploadFiles() {
+      const files = fileInput.files;
+
+      if (!files.length) {
+        alert("Pili usa og file.");
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      progressArea.style.display = "block";
+      progressBar.style.width = "0%";
+      progressBar.textContent = "0%";
+      statusText.textContent = "Starting upload...";
+
+      try {
+        for (let i = 0; i < files.length; i++) {
+          await uploadOneFile(files[i], i + 1, files.length);
+        }
+
+        statusText.textContent = "✅ Upload complete!";
+        fileInput.value = "";
+        await loadFiles();
+
+      } catch (error) {
+        console.error(error);
+        statusText.textContent = "❌ Upload error: " + error.message;
+      }
+
+      uploadBtn.disabled = false;
+    }
+
+    function uploadOneFile(file, current, total) {
+      return new Promise((resolve, reject) => {
+        const category = getCategory(file);
+        const safeName = cleanName(file.name);
+        const fileName = Date.now() + "_" + safeName;
+        const filePath = `${mainFolder}/${category}/${fileName}`;
+
+        const fileRef = ref(storage, filePath);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        statusText.textContent = `Uploading ${current}/${total}: ${file.name}`;
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const percent = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+
+            progressBar.style.width = percent + "%";
+            progressBar.textContent = percent + "%";
+          },
+          (error) => reject(error),
+          () => resolve()
+        );
+      });
+    }
+
+    async function loadFiles() {
+      setLoading();
+
+      const categories = ["images", "videos", "files", "codes"];
+
+      try {
+        for (const category of categories) {
+          lists[category].innerHTML = "";
+          const folderRef = ref(storage, `${mainFolder}/${category}`);
+          const result = await listAll(folderRef);
+
+          counts[category].textContent = `${result.items.length} file${result.items.length === 1 ? "" : "s"}`;
+
+          if (result.items.length === 0) {
+            lists[category].innerHTML = `<div class="empty">Wala pay sulod diri 🌷</div>`;
+            continue;
+          }
+
+          const reversed = [...result.items].reverse();
+
+          for (const item of reversed) {
+            const url = await getDownloadURL(item);
+            renderFile(category, item, url);
+          }
+        }
+
+      } catch (error) {
+        console.error(error);
+
+        Object.keys(lists).forEach(category => {
+          lists[category].innerHTML = `
+            <div class="error">
+              Error loading ${category}: ${error.message}
+            </div>
+          `;
+        });
+      }
+    }
+
+    function setLoading() {
+      Object.keys(lists).forEach(category => {
+        lists[category].innerHTML = `<div class="empty">Loading ${category}...</div>`;
+        counts[category].textContent = "0 files";
+      });
+    }
+
+    function renderFile(category, item, url) {
+      const card = document.createElement("div");
+      card.className = "file-card";
+
+      let preview = "";
+
+      if (category === "images") {
+        preview = `<div class="preview"><img src="${url}" alt="${item.name}"></div>`;
+      }
+
+      if (category === "videos") {
+        preview = `
+          <div class="preview">
+            <video controls>
+              <source src="${url}">
+              Your browser does not support video.
+            </video>
+          </div>
+        `;
+      }
+
+      if (category === "codes" || isCodeFile(item.name)) {
+        preview = `
+          <div class="preview">
+            <button class="soft" onclick="previewText('${url}', this)">
+              👀 Preview Code
+            </button>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="file-name">${item.name}</div>
+        <div class="file-info">📁 ${category}</div>
+        <div class="file-info">🔗 ${item.fullPath}</div>
+
+        ${preview}
+
+        <div class="actions">
+          <a href="${url}" target="_blank">Open</a>
+          <a href="${url}" download>Download</a>
+          <button class="danger" onclick="deleteFile('${item.fullPath}')">Delete</button>
+        </div>
+      `;
+
+      lists[category].appendChild(card);
+    }
+
+    window.previewText = async function(url, button) {
+      try {
+        button.disabled = true;
+        button.textContent = "Loading...";
+
+        const response = await fetch(url);
+        const text = await response.text();
+
+        const pre = document.createElement("pre");
+        pre.textContent = text;
+
+        button.parentElement.appendChild(pre);
+        button.remove();
+
+      } catch (error) {
+        alert("Cannot preview this file.");
+        button.disabled = false;
+        button.textContent = "👀 Preview Code";
+      }
+    };
+
+    window.deleteFile = async function(fullPath) {
+      const sure = confirm("Sure ka nga i-delete ni nga file?");
+
+      if (!sure) return;
+
+      try {
+        const fileRef = ref(storage, fullPath);
+        await deleteObject(fileRef);
+
+        alert("Deleted na 🌸");
+        await loadFiles();
+
+      } catch (error) {
+        alert("Delete error: " + error.message);
+      }
+    };
+
+    loadFiles();
+  </script>
+</body>
+</html>
