@@ -148,6 +148,14 @@
       margin-bottom: 12px;
     }
 
+    .file-label {
+      display: block;
+      margin: 8px 0 7px;
+      color: #831843;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
     .button-row {
       display: flex;
       gap: 10px;
@@ -442,11 +450,20 @@
     </div>
 
     <div class="upload-box">
+      <label class="file-label" for="galleryInput">🖼️ Choose Images / Videos from Gallery</label>
+      <input
+        type="file"
+        id="galleryInput"
+        multiple
+        accept="image/*,video/*"
+      />
+
+      <label class="file-label" for="fileInput">📁 Choose Files / Codes from Internal Storage</label>
       <input
         type="file"
         id="fileInput"
         multiple
-        accept="image/*,video/*,.html,.css,.js,.json,.txt,.php,.py,.java,.cpp,.c,.cs,.xml,.md,.pdf,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+        accept=".html,.css,.js,.json,.txt,.php,.py,.java,.cpp,.c,.cs,.xml,.md,.pdf,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
       />
 
       <div class="button-row">
@@ -558,6 +575,7 @@
       }
     }
 
+    const galleryInput = document.getElementById("galleryInput");
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
     const refreshBtn = document.getElementById("refreshBtn");
@@ -635,7 +653,7 @@
     }
 
     async function uploadFiles() {
-      const files = fileInput.files;
+      const files = [...galleryInput.files, ...fileInput.files];
 
       if (!files.length) {
         alert("Please select a file first.");
@@ -654,6 +672,7 @@
         }
 
         statusText.textContent = "✅ Upload complete!";
+        galleryInput.value = "";
         fileInput.value = "";
         await loadFiles();
 
