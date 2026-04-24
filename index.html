@@ -148,6 +148,46 @@
       margin-bottom: 12px;
     }
 
+    .paste-code-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 20px;
+      border: 2px solid #fbcfe8;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .paste-code-box input,
+    .paste-code-box textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      border: 2px solid #fbcfe8;
+      background: #ffffff;
+      color: #831843;
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .paste-code-box textarea {
+      min-height: 170px;
+      resize: vertical;
+      font-family: Consolas, Monaco, "Courier New", monospace;
+      color: #1e1b4b;
+      font-weight: 600;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    .paste-help {
+      margin: 0 0 12px;
+      color: #7c3aed;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
     .file-label {
       display: block;
       margin: 8px 0 7px;
@@ -466,6 +506,27 @@
         accept=".html,.css,.js,.json,.txt,.php,.py,.java,.cpp,.c,.cs,.xml,.md,.pdf,.zip,.rar,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
       />
 
+      <div class="paste-code-box">
+        <label class="file-label" for="codeFileName">💻 Paste Code Directly</label>
+        <p class="paste-help">
+          Paste your code here, type your file name like index.html, style.css, script.js, app.py, or notes.txt, then tap Save Code.
+        </p>
+        <input
+          type="text"
+          id="codeFileName"
+          placeholder="Example: index.html"
+        />
+        <textarea
+          id="codePasteArea"
+          placeholder="Paste your code here..."
+          spellcheck="false"
+        ></textarea>
+        <div class="button-row">
+          <button id="saveCodeBtn" type="button">💾 Save Code</button>
+          <button id="clearCodeBtn" type="button" class="soft">🧹 Clear Code Box</button>
+        </div>
+      </div>
+
       <div class="button-row">
         <button id="uploadBtn">🌸 Upload Files</button>
         <button id="refreshBtn" class="soft">🔄 Refresh</button>
@@ -577,6 +638,10 @@
 
     const galleryInput = document.getElementById("galleryInput");
     const fileInput = document.getElementById("fileInput");
+    const codeFileName = document.getElementById("codeFileName");
+    const codePasteArea = document.getElementById("codePasteArea");
+    const saveCodeBtn = document.getElementById("saveCodeBtn");
+    const clearCodeBtn = document.getElementById("clearCodeBtn");
     const uploadBtn = document.getElementById("uploadBtn");
     const refreshBtn = document.getElementById("refreshBtn");
     const progressArea = document.getElementById("progressArea");
@@ -601,6 +666,12 @@
 
     uploadBtn.addEventListener("click", uploadFiles);
     refreshBtn.addEventListener("click", loadFiles);
+    saveCodeBtn.addEventListener("click", savePastedCode);
+    clearCodeBtn.addEventListener("click", () => {
+      codeFileName.value = "";
+      codePasteArea.value = "";
+      statusText.textContent = "Code box cleared.";
+    });
 
     document.querySelectorAll(".tab").forEach(tab => {
       tab.addEventListener("click", () => {
@@ -614,6 +685,20 @@
 
     function cleanName(name) {
       return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    }
+
+    function normalizeCodeFileName(name) {
+      let safeName = cleanName(name.trim());
+
+      if (!safeName) {
+        safeName = "pasted-code.txt";
+      }
+
+      if (!safeName.includes(".")) {
+        safeName += ".txt";
+      }
+
+      return safeName;
     }
 
     function getCategory(file) {
@@ -650,6 +735,46 @@
         name.endsWith(".xml") ||
         name.endsWith(".md")
       );
+    }
+
+    async function savePastedCode() {
+      const name = normalizeCodeFileName(codeFileName.value);
+      const code = codePasteArea.value;
+
+      if (!code.trim()) {
+        alert("Please paste your code first.");
+        return;
+      }
+
+      saveCodeBtn.disabled = true;
+      progressArea.style.display = "block";
+      progressBar.style.width = "0%";
+      progressBar.textContent = "0%";
+      statusText.textContent = "Saving pasted code...";
+
+      try {
+        const codeFile = new File([code], name, {
+          type: "text/plain"
+        });
+
+        await uploadOneFile(codeFile, 1, 1);
+
+        statusText.textContent = "✅ Code saved successfully!";
+        codeFileName.value = "";
+        codePasteArea.value = "";
+        await loadFiles();
+
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+        document.querySelector('[data-tab="codes"]').classList.add("active");
+        document.getElementById("codes").classList.add("active");
+
+      } catch (error) {
+        console.error(error);
+        statusText.textContent = "❌ Save code error: " + error.message;
+      }
+
+      saveCodeBtn.disabled = false;
     }
 
     async function uploadFiles() {
